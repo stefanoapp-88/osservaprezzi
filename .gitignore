@@ -1,0 +1,16 @@
+venv/
+logs/
+cloudflared/
+
+data/snapshots/
+
+__pycache__/
+*.pyc
+*.log
+
+.streamlit/
+.env
+
+site/
+
+start_tunnel.bat

@@ -1,0 +1,11 @@
+{
+  "data_folder": "data",
+  "snapshot_folder": "data/snapshots",
+  "log_folder": "logs",
+  "radius_km": 15,
+  "max_workers": 1,
+  "allowed_provinces": [
+    "RG",
+    "CL"
+  ]
+}
