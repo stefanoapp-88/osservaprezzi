@@ -86,6 +86,10 @@ st.info(
 
 st.sidebar.header("Filtri")
 
+search_text = st.sidebar.text_input(
+    "🔎 Cerca impianto"
+)
+
 province = st.sidebar.multiselect(
     "Provincia",
     sorted(df["province"].dropna().unique())
@@ -169,6 +173,39 @@ if mode == "Self":
 if mode == "Servito":
     filtered = filtered[
         filtered["isSelf"] == False
+    ]
+
+if search_text:
+
+    txt = search_text.lower()
+
+    filtered = filtered[
+
+        filtered["stationName"]
+        .astype(str)
+        .str.lower()
+        .str.contains(txt, na=False)
+
+        |
+
+        filtered["city"]
+        .astype(str)
+        .str.lower()
+        .str.contains(txt, na=False)
+
+        |
+
+        filtered["brand"]
+        .astype(str)
+        .str.lower()
+        .str.contains(txt, na=False)
+
+        |
+
+        filtered["stationId"]
+        .astype(str)
+        .str.contains(txt, na=False)
+
     ]
 
 filtered["Modalità"] = filtered["isSelf"].map(
