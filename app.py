@@ -496,13 +496,24 @@ with tab_ricerca:
         "🔎 Cerca impianto o indirizzo"
     )
 
+    carburante_rapido = st.radio(
+        "Carburante",
+        [
+            "Tutti",
+            "Benzina",
+            "Gasolio",
+            "GPL"
+        ],
+        horizontal=True
+    )
+
     order_by = st.selectbox(
-    "Ordina per",
-    [
-        "Prezzo",
-        "Impianto",
-        "Comune"
-    ]
+        "Ordina per",
+        [
+            "Prezzo",
+            "Impianto",
+            "Comune"
+        ]
     )
 
     if search:
@@ -527,6 +538,17 @@ with tab_ricerca:
 
         filtered_search = filtered
 
+    if carburante_rapido != "Tutti":
+
+        filtered_search = filtered_search[
+            filtered_search["fuel"]
+            .str.contains(
+                carburante_rapido,
+                case=False,
+                na=False
+            )
+        ]    
+
     view = filtered_search[
     [
         "stationName",
@@ -536,6 +558,7 @@ with tab_ricerca:
         "Modalità"
     ]
     ]
+
 
     if order_by == "Prezzo":
         view = view.sort_values("price")
@@ -554,11 +577,36 @@ with tab_ricerca:
         "Modalità"
     ]
 
-    st.dataframe(
-        view,
-        use_container_width=True,
-        hide_index=True
-    )
+    st.caption(
+    f"🔎 {len(view)} risultati trovati"
+                )
+
+    #st.dataframe(
+    #    view,
+    #    use_container_width=True,
+    #    hide_index=True)
+
+    st.subheader("Risultati")
+
+    for _, row in view.head(20).iterrows():
+
+        with st.container(border=True):
+
+            st.markdown(
+                f"### 🏪 {row['Impianto']}"
+            )
+
+            st.write(
+                f"📍 {row['Comune']}"
+            )
+
+            st.write(
+                f"⛽ {row['Carburante']} - {row['Modalità']}"
+            )
+
+            st.write(
+                f"💰 € {row['Prezzo']:.3f}"
+            )
 
     st.divider()
 
@@ -571,6 +619,10 @@ with tab_ricerca:
             .dropna()
             .unique()
         )
+    )
+
+    solo_economici = st.checkbox(
+    "🔥 Solo miglior prezzo per impianto"
     )
 
     detail = filtered_search[
