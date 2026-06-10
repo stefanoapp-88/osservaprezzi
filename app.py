@@ -8,7 +8,8 @@ from folium.plugins import MarkerCluster
 st.set_page_config(
     page_title="OsservaPrezzi Carburanti",
     page_icon="⛽",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # ======================
@@ -57,7 +58,11 @@ df["Aggiornato"] = (
 # HEADER
 # ======================
 
-st.title("⛽ OsservaPrezzi Sicilia")
+st.title("⛽ OsservaPrezzi")
+
+st.caption(
+    "Monitoraggio prezzi carburanti in Sicilia"
+)
 
 
 last_update = update.get(
@@ -219,16 +224,25 @@ filtered["Modalità"] = filtered["isSelf"].map(
 # KPI
 # ======================
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
 
     st.metric(
-        "Impianti",
+        "🏪 Impianti",
         filtered["stationId"].nunique()
     )
 
 with col2:
+
+    st.metric(
+        "📍 Comuni",
+        filtered["city"].nunique()
+    )
+
+col3, col4 = st.columns(2)
+
+with col3:
 
     gasolio = filtered[
         filtered["fuel"]
@@ -242,11 +256,11 @@ with col2:
     if len(gasolio):
 
         st.metric(
-            "Gasolio Min",
+            "🚛 Gasolio Min",
             f"€ {gasolio['price'].min():.3f}"
         )
 
-with col3:
+with col4:
 
     benzina = filtered[
         filtered["fuel"]
@@ -260,221 +274,255 @@ with col3:
     if len(benzina):
 
         st.metric(
-            "Benzina Min",
+            "⛽ Benzina Min",
             f"€ {benzina['price'].min():.3f}"
         )
 
-with col4:
-
-    st.metric(
-        "Comuni",
-        filtered["city"].nunique()
-    )
-
 st.divider()
 
-st.subheader("🏆 Migliori impianti")
-
-col_benzina, col_gasolio = st.columns(2)
-
-with col_benzina:
-
-    st.markdown("### ⛽ Benzina")
-
-    top_benzina = (
-    filtered[
-        filtered["fuel"]
-        .str.contains(
-            "Benzina",
-            case=False,
-            na=False
-        )
-    ]
-    .sort_values("price")
-    .drop_duplicates(
-        subset=["stationId"]
-    )
+tab_mappa, tab_classifiche, tab_ricerca = st.tabs(
     [
-        [
-            "stationName",
-            "city",
-            "price",
-            "Aggiornato"
-        ]
+        "📍 Mappa",
+        "🏆 Classifiche",
+        "🔍 Ricerca"
     ]
-    .head(10)
-    )
-
-    st.write(top_benzina)
-
-with col_gasolio:
-
-    st.markdown("### 🚛 Gasolio")
-
-    top_gasolio = (
-    filtered[
-        filtered["fuel"]
-        .str.contains(
-            "Gasolio",
-            case=False,
-            na=False
-        )
-    ]
-    .sort_values("price")
-    .drop_duplicates(
-        subset=["stationId"]
-    )
-    [
-        [
-            "stationName",
-            "city",
-            "price",
-            "Aggiornato"
-        ]
-    ]
-    .head(10)
 )
 
-    st.write(top_gasolio)
+
+with tab_classifiche:
+
+    st.subheader("🏆 Migliori impianti")
+
+    col_benzina, col_gasolio = st.columns(2)
+
+    with col_benzina:
+
+        st.markdown("### ⛽ Benzina")
+
+        top_benzina = (
+            filtered[
+                filtered["fuel"]
+                .str.contains(
+                    "Benzina",
+                    case=False,
+                    na=False
+                )
+            ]
+            .sort_values("price")
+            .drop_duplicates(
+                subset=["stationId"]
+            )
+            [
+                [
+                    "stationName",
+                    "city",
+                    "price",
+                    "Aggiornato"
+                ]
+            ]
+            .head(10)
+        )
+
+        top_benzina.columns = [
+            "Impianto",
+            "Comune",
+            "Prezzo",
+            "Aggiornato"
+        ]
+
+        st.dataframe(
+                top_benzina,
+                use_container_width=True,
+                hide_index=True
+            )
+
+    with col_gasolio:
+
+        st.markdown("### 🚛 Gasolio")
+
+        top_gasolio = (
+            filtered[
+                filtered["fuel"]
+                .str.contains(
+                    "Gasolio",
+                    case=False,
+                    na=False
+                )
+            ]
+            .sort_values("price")
+            .drop_duplicates(
+                subset=["stationId"]
+            )
+            [
+                [
+                    "stationName",
+                    "city",
+                    "price",
+                    "Aggiornato"
+                ]
+            ]
+            .head(10)
+        )
+
+        top_gasolio.columns = [
+            "Impianto",
+            "Comune",
+            "Prezzo",
+            "Aggiornato"
+        ]
+
+        st.dataframe(
+            top_gasolio,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
 
 
 # ======================
 # MAPPA
 # ======================
 
-st.subheader("🗺️ Mappa impianti")
+with tab_mappa:
 
-stations_map = (
-    filtered
-    .sort_values("price")
-    .drop_duplicates(subset=["stationId"])
-)
+        st.subheader("🗺️ Mappa impianti")
 
-stations_map = stations_map.dropna(
-    subset=["lat", "lng"]
-)
+        stations_map = (
+            filtered
+            .sort_values("price")
+            .drop_duplicates(subset=["stationId"])
+        )
 
-st.write(
-    f"Impianti visualizzati: {len(stations_map)}"
-)
+        stations_map = stations_map.dropna(
+            subset=["lat", "lng"]
+        )
 
-if len(stations_map) > 0:
+        st.write(
+            f"Impianti visualizzati: {len(stations_map)}"
+        )
 
-    m = folium.Map()
+        if len(stations_map) > 0:
 
-    cluster = MarkerCluster().add_to(m)
+            m = folium.Map()
 
-    for _, row in stations_map.iterrows():
+            cluster = MarkerCluster().add_to(m)
 
-        station_rows = filtered[
-            filtered["stationId"] == row["stationId"]
-        ]
+            for _, row in stations_map.iterrows():
 
-        fuel_lines = ""
+                station_rows = filtered[
+                    filtered["stationId"] == row["stationId"]
+                ]
 
-        for _, fuel_row in station_rows.iterrows():
+                fuel_lines = ""
 
-            tipo = (
-                "Self"
-                if fuel_row["isSelf"]
-                else "Servito"
+                for _, fuel_row in station_rows.iterrows():
+
+                    tipo = (
+                        "Self"
+                        if fuel_row["isSelf"]
+                        else "Servito"
+                    )
+
+                    fuel_lines += (
+                        f"⛽ {fuel_row['fuel']} "
+                        f"{tipo}: "
+                        f"€ {fuel_row['price']}<br>"
+                    )
+
+                popup = f"""
+                    <div style="width:260px">
+
+                    <b>{row['stationName']}</b><br>
+
+                    {row['city']}<br>
+                    {row['address']}<br><br>
+
+                    {fuel_lines}
+
+                    <hr>
+
+                    <b>Aggiornato:</b><br>
+                    {row['Aggiornato']}
+
+                    </div>
+                    """
+
+                folium.Marker(
+                    location=[
+                        row["lat"],
+                        row["lng"]
+                    ],
+                    popup=popup
+                ).add_to(cluster)
+
+            bounds = [
+                [
+                    stations_map["lat"].min(),
+                    stations_map["lng"].min()
+                ],
+                [
+                    stations_map["lat"].max(),
+                    stations_map["lng"].max()
+                ]
+            ]
+
+            m.fit_bounds(bounds)
+
+            st_folium(
+                m,
+                height=650,
+                width=None
             )
-
-            fuel_lines += (
-                f"⛽ {fuel_row['fuel']} "
-                f"{tipo}: "
-                f"€ {fuel_row['price']}<br>"
-            )
-
-        popup = f"""
-            <div style="width:260px">
-
-            <b>{row['stationName']}</b><br>
-
-            {row['city']}<br>
-            {row['address']}<br><br>
-
-            {fuel_lines}
-
-            <hr>
-
-            <b>Aggiornato:</b><br>
-            {row['Aggiornato']}
-
-            </div>
-            """
-
-        folium.Marker(
-            location=[
-                row["lat"],
-                row["lng"]
-            ],
-            popup=popup
-        ).add_to(cluster)
-
-    bounds = [
-        [
-            stations_map["lat"].min(),
-            stations_map["lng"].min()
-        ],
-        [
-            stations_map["lat"].max(),
-            stations_map["lng"].max()
-        ]
-    ]
-
-    m.fit_bounds(bounds)
-
-    st_folium(
-        m,
-        height=500,
-        width=None
-    )
 
 # ======================
 # TABELLA COMPLETA
 # ======================
 
-st.subheader("🔍 Ricerca impianti")
+with tab_ricerca:
 
-search = st.text_input(
-    "Ricerca impianto / indirizzo"
-)
+    st.subheader("🔍 Ricerca impianti")
 
-if search:
+    search = st.text_input(
+        "Ricerca impianto / indirizzo"
+    )
 
-    filtered = filtered[
-        filtered["stationName"]
-        .fillna("")
-        .str.contains(
-            search,
-            case=False
-        )
-        |
-        filtered["address"]
-        .fillna("")
-        .str.contains(
-            search,
-            case=False
-        )
-    ]
+    if search:
 
-st.dataframe(
-
-        filtered[
-        [
-            "stationName",
-            "city",
-            "address",
-            "fuel",
-            "price",
-            "Modalità",
-            "Aggiornato"
+        filtered_search = filtered[
+            filtered["stationName"]
+            .fillna("")
+            .str.contains(
+                search,
+                case=False
+            )
+            |
+            filtered["address"]
+            .fillna("")
+            .str.contains(
+                search,
+                case=False
+            )
         ]
-    ].sort_values(
-        "price"
-    ),
 
-    use_container_width=True,
-    hide_index=True
-)
+    else:
+
+        filtered_search = filtered
+
+    st.dataframe(
+
+        filtered_search[
+            [
+                "stationName",
+                "city",
+                "address",
+                "fuel",
+                "price",
+                "Modalità",
+                "Aggiornato"
+            ]
+        ].sort_values("price"),
+
+        use_container_width=True,
+        hide_index=True
+    )
