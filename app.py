@@ -89,60 +89,61 @@ st.info(
 # SIDEBAR
 # ======================
 
-st.sidebar.header("Filtri")
+with st.sidebar.expander(
+    "⚙️ Filtri",
+    expanded=False
+):
 
-search_text = st.sidebar.text_input(
-    "🔎 Cerca impianto"
-)
+    search_text = st.text_input(
+        "🔎 Cerca impianto"
+    )
 
-province = st.sidebar.multiselect(
-    "Provincia",
-    sorted(df["province"].dropna().unique())
-)
+    province = st.multiselect(
+        "Provincia",
+        sorted(df["province"].dropna().unique())
+    )
 
-city_source = df.copy()
+    city_source = df.copy()
 
-if province:
+    if province:
 
-    city_source = city_source[
-        city_source["province"].isin(
-            province
+        city_source = city_source[
+            city_source["province"].isin(
+                province
+            )
+        ]
+
+    city = st.multiselect(
+        "Comune",
+        sorted(
+            [
+                c
+                for c in city_source["city"]
+                .dropna()
+                .unique()
+                if str(c).strip()
+            ]
         )
-    ]
+    )
 
-city = st.sidebar.multiselect(
-    "Comune",
-    sorted(
+    fuel = st.multiselect(
+        "Carburante",
+        sorted(df["fuel"].dropna().unique())
+    )
+
+    brand = st.multiselect(
+        "Brand",
+        sorted(df["brand"].dropna().unique())
+    )
+
+    mode = st.selectbox(
+        "Modalità",
         [
-            c
-            for c in city_source["city"]
-            .dropna()
-            .unique()
-            if str(c).strip()
+            "Tutti",
+            "Self",
+            "Servito"
         ]
     )
-)
-
-
-
-fuel = st.sidebar.multiselect(
-    "Carburante",
-    sorted(df["fuel"].dropna().unique())
-)
-
-brand = st.sidebar.multiselect(
-    "Brand",
-    sorted(df["brand"].dropna().unique())
-)
-
-mode = st.sidebar.selectbox(
-    "Modalità",
-    [
-        "Tutti",
-        "Self",
-        "Servito"
-    ]
-)
 
 # ======================
 # FILTERS
@@ -388,6 +389,10 @@ with tab_mappa:
 
         st.subheader("🗺️ Mappa impianti")
 
+        st.caption(
+    "💡 Tocca un marker per vedere i dettagli dell'impianto"
+        )
+
         stations_map = (
             filtered
             .sort_values("price")
@@ -404,7 +409,11 @@ with tab_mappa:
 
         if len(stations_map) > 0:
 
-            m = folium.Map()
+            m = folium.Map(
+                                zoom_control=True,
+                                dragging=False,
+                                scrollWheelZoom=False
+                            )
 
             cluster = MarkerCluster().add_to(m)
 
@@ -471,7 +480,7 @@ with tab_mappa:
 
             st_folium(
                 m,
-                height=650,
+                height=400,
                 width=None
             )
 
@@ -485,6 +494,15 @@ with tab_ricerca:
 
     search = st.text_input(
         "Ricerca impianto / indirizzo"
+    )
+
+    order_by = st.selectbox(
+    "Ordina per",
+    [
+        "Prezzo",
+        "Impianto",
+        "Comune"
+    ]
     )
 
     if search:
@@ -509,20 +527,90 @@ with tab_ricerca:
 
         filtered_search = filtered
 
-    st.dataframe(
+    view = filtered_search[
+    [
+        "stationName",
+        "city",
+        "fuel",
+        "price",
+        "Modalità"
+    ]
+    ]
 
-        filtered_search[
+    if order_by == "Prezzo":
+        view = view.sort_values("price")
+
+    elif order_by == "Impianto":
+        view = view.sort_values("stationName")
+
+    elif order_by == "Comune":
+        view = view.sort_values("city")
+
+    view.columns = [
+        "Impianto",
+        "Comune",
+        "Carburante",
+        "Prezzo",
+        "Modalità"
+    ]
+
+    st.dataframe(
+        view,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.divider()
+
+    st.subheader("🏪 Dettaglio impianto")
+
+    impianto = st.selectbox(
+        "Seleziona un impianto",
+        sorted(
+            filtered_search["stationName"]
+            .dropna()
+            .unique()
+        )
+    )
+
+    detail = filtered_search[
+    filtered_search["stationName"] == impianto
+    ]
+
+    if len(detail) > 0:
+
+        st.write(
+            f"📍 {detail.iloc[0]['address']}"
+        )
+
+        st.write(
+            f"🏙️ {detail.iloc[0]['city']}"
+        )
+
+        st.write(
+            f"🏷️ {detail.iloc[0]['brand']}"
+        )
+
+        st.divider()
+
+        prezzi_impianto = detail[
             [
-                "stationName",
-                "city",
-                "address",
                 "fuel",
                 "price",
                 "Modalità",
                 "Aggiornato"
             ]
-        ].sort_values("price"),
+        ].sort_values("price")
 
-        use_container_width=True,
-        hide_index=True
-    )
+        prezzi_impianto.columns = [
+            "Carburante",
+            "Prezzo",
+            "Modalità",
+            "Aggiornato"
+        ]
+
+        st.dataframe(
+            prezzi_impianto,
+            use_container_width=True,
+            hide_index=True
+        )
