@@ -281,11 +281,11 @@ with col4:
 
 st.divider()
 
-tab_mappa, tab_classifiche, tab_ricerca = st.tabs(
+tab_classifiche, tab_ricerca, tab_mappa = st.tabs(
     [
-        "📍 Mappa",
         "🏆 Classifiche",
-        "🔍 Ricerca"
+        "🔍 Ricerca",
+        "📍 Mappa",
     ]
 )
 
@@ -493,7 +493,7 @@ with tab_ricerca:
     st.subheader("🔍 Ricerca impianti")
 
     search = st.text_input(
-        "Ricerca impianto / indirizzo"
+        "🔎 Cerca impianto o indirizzo"
     )
 
     order_by = st.selectbox(
@@ -579,16 +579,22 @@ with tab_ricerca:
 
     if len(detail) > 0:
 
-        st.write(
-            f"📍 {detail.iloc[0]['address']}"
-        )
+        st.info(
+                f"""
+            🏪 {impianto}
 
-        st.write(
-            f"🏙️ {detail.iloc[0]['city']}"
-        )
+            📍 {detail.iloc[0]['address']}
 
-        st.write(
-            f"🏷️ {detail.iloc[0]['brand']}"
+            🏙️ {detail.iloc[0]['city']}
+
+            🏷️ {detail.iloc[0]['brand']}
+            """
+            )
+
+        prezzo_min = detail["price"].min()
+
+        st.success(
+            f"🔥 Miglior prezzo disponibile: € {prezzo_min:.3f}"
         )
 
         st.divider()
