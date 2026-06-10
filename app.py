@@ -121,6 +121,10 @@ fuel = st.sidebar.multiselect(
     sorted(df["fuel"].dropna().unique())
 )
 
+brand = st.sidebar.multiselect(
+    "Brand",
+    sorted(df["brand"].dropna().unique())
+)
 
 mode = st.sidebar.selectbox(
     "Modalità",
@@ -152,6 +156,10 @@ if fuel:
         filtered["fuel"].isin(fuel)
     ]
 
+if brand:
+    filtered = filtered[
+        filtered["brand"].isin(brand)
+    ]
 
 if mode == "Self":
     filtered = filtered[
@@ -260,11 +268,7 @@ with col_benzina:
     .head(10)
     )
 
-    st.dataframe(
-    top_benzina,
-    use_container_width=True,
-    hide_index=True
-)
+    st.write(top_benzina)
 
 with col_gasolio:
 
@@ -294,11 +298,7 @@ with col_gasolio:
     .head(10)
 )
 
-    st.dataframe(
-        top_gasolio,
-        use_container_width=True,
-        hide_index=True
-    )
+    st.write(top_gasolio)
 
 
 # ======================
